@@ -1,0 +1,31 @@
+import torch
+from torch.optim import Adam
+import matplotlib.pyplot as plt
+
+# Dados sintéticos
+x = torch.linspace(-2, 2, 100).reshape(-1, 1)
+y = x**3 + 0.3 * torch.randn_like(x)
+
+# Modelo simples
+model = torch.nn.Linear(1, 1)
+loss_fn = torch.nn.MSELoss()
+
+# Otimizador Adam com diferentes β1 e β2
+optimizer = Adam(model.parameters(), lr=0.01, betas=(0.9, 0.999))
+
+# Treinamento
+losses = []
+for epoch in range(200):
+    optimizer.zero_grad()
+    predictions = model(x)
+    loss = loss_fn(predictions, y)
+    loss.backward()
+    optimizer.step()
+    losses.append(loss.item())
+
+# Plotando as perdas
+plt.plot(losses)
+plt.xlabel('Época')
+plt.ylabel('Perda')
+plt.title('Convergência do Adam com β1=0.9, β2=0.999')
+plt.show()
