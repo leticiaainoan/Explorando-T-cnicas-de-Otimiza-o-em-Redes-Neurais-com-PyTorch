@@ -1,0 +1,45 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Simulação de trajetórias
+def gradient_descent(update_rule, epochs=50, eta=0.1, beta=0.9):
+    x, y = [0.5], [0.5]  # Inicialização
+    v_x, v_y = 0, 0  # Velocidades iniciais
+    for _ in range(epochs):
+        # Gradiente de uma função quadrática simples
+        grad_x, grad_y = 2 * x[-1], 2 * y[-1]
+        
+        if update_rule == "SGD":
+            x.append(x[-1] - eta * grad_x)
+            y.append(y[-1] - eta * grad_y)
+        
+        elif update_rule == "Momentum":
+            v_x = beta * v_x + grad_x
+            v_y = beta * v_y + grad_y
+            x.append(x[-1] - eta * v_x)
+            y.append(y[-1] - eta * v_y)
+        
+        elif update_rule == "Nesterov":
+            v_x = beta * v_x + 2 * (x[-1] - eta * beta * v_x)
+            v_y = beta * v_y + 2 * (y[-1] - eta * beta * v_y)
+            x.append(x[-1] - eta * v_x)
+            y.append(y[-1] - eta * v_y)
+    
+    return x, y
+
+# Trajetórias
+sgd = gradient_descent("SGD")
+momentum = gradient_descent("Momentum")
+nesterov = gradient_descent("Nesterov")
+
+# Gráfico
+plt.figure(figsize=(8, 6))
+plt.plot(sgd[0], sgd[1], label="SGD", marker="o", alpha=0.7)
+plt.plot(momentum[0], momentum[1], label="Momentum", marker="o", alpha=0.7)
+plt.plot(nesterov[0], nesterov[1], label="Nesterov Momentum", marker="o", alpha=0.7)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Comparação de Trajetórias: SGD, Momentum e Nesterov Momentum")
+plt.legend()
+plt.grid(True)
+plt.show()
