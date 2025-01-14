@@ -1,0 +1,48 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import matplotlib.pyplot as plt
+
+# Modelo simples e otimizador
+model = nn.Linear(1, 1)
+
+# Função para criar otimizadores e schedulers
+def create_optimizer_and_scheduler(lr=0.1):
+    optimizer = optim.SGD(model.parameters(), lr=lr)
+    schedulers = {
+        "StepLR": optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1),
+        "ExponentialLR": optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9),
+        "CosineAnnealingLR": optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50),
+    }
+    return optimizer, schedulers
+
+# Configuração para capturar o comportamento de cada scheduler
+epochs = 50
+lr_histories = {}
+
+# Loop para treinar com diferentes schedulers
+for scheduler_name in ["StepLR", "ExponentialLR", "CosineAnnealingLR"]:
+    # Criação de um novo otimizador e scheduler
+    optimizer, schedulers = create_optimizer_and_scheduler()
+    scheduler = schedulers[scheduler_name]
+    
+    lr_history = []
+    for epoch in range(epochs):
+        # Simula uma iteração de treinamento
+        optimizer.step()
+        lr_history.append(optimizer.param_groups[0]['lr'])
+        scheduler.step()
+    
+    lr_histories[scheduler_name] = lr_history
+
+# Visualização
+plt.figure(figsize=(10, 6))
+for name, lr_history in lr_histories.items():
+    plt.plot(range(epochs), lr_history, label=name)
+
+plt.xlabel("Época")
+plt.ylabel("Learning Rate")
+plt.title("Comparação de Schedulers de Taxa de Aprendizado")
+plt.legend()
+plt.grid(True)
+plt.show()
