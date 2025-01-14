@@ -1,0 +1,100 @@
+import seaborn as sns
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import matplotlib.pyplot as plt
+
+# Configuração do estilo dos gráficos
+
+sns.set_style("darkgrid")
+# 1. Dados Sintéticos
+torch.manual_seed(42)
+x = torch.linspace(-2, 2, 100).reshape(-1, 1)
+y = x**3 + 0.3 * torch.randn_like(x)
+
+# Divisão em treino e teste
+train_x, test_x = x[:80], x[80:]
+train_y, test_y = y[:80], y[80:]
+
+# 2. Modelo Simples
+model = nn.Linear(1, 1)
+loss_fn = nn.MSELoss()
+
+# 3. Otimizadores e Schedulers
+optimizers = {
+    "SGD": optim.SGD(model.parameters(), lr=0.1),
+    "Adam": optim.Adam(model.parameters(), lr=0.01, betas=(0.9, 0.999))
+}
+
+schedulers = {
+    "StepLR": lambda optimizer: optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5),
+    "ExponentialLR": lambda optimizer: optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9),
+    "CosineAnnealingLR": lambda optimizer: optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50),
+}
+
+# 4. Função de Treinamento
+def train_model(optimizer_name, scheduler_name, epochs=50):
+    # Recriação do modelo para cada experimento
+    model = nn.Linear(1, 1)
+    optimizer = optimizers[optimizer_name]
+    scheduler = schedulers[scheduler_name](optimizer)
+    
+    train_losses = []
+    test_losses = []
+    lr_history = []
+
+    for epoch in range(epochs):
+        # Treinamento
+        model.train()
+        optimizer.zero_grad()
+        predictions = model(train_x)
+        loss = loss_fn(predictions, train_y)
+        loss.backward()
+        optimizer.step()
+
+        # Registro do learning rate e perda
+        lr_history.append(optimizer.param_groups[0]['lr'])
+        train_losses.append(loss.item())
+
+        # Avaliação no conjunto de teste
+        model.eval()
+        with torch.no_grad():
+            test_predictions = model(test_x)
+            test_loss = loss_fn(test_predictions, test_y)
+            test_losses.append(test_loss.item())
+
+        # Atualização do scheduler
+        scheduler.step()
+
+    return train_losses, test_losses, lr_history
+
+# 5. Experimentos
+results = {}
+for optimizer_name in optimizers.keys():
+    for scheduler_name in schedulers.keys():
+        key = f"{optimizer_name} + {scheduler_name}"
+        results[key] = train_model(optimizer_name, scheduler_name)
+
+# 6. Visualização
+epochs = range(50)
+for key, (train_losses, test_losses, lr_history) in results.items():
+    # Perdas de treinamento e teste
+    plt.figure(figsize=(12, 5))
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, train_losses, label="Treino")
+    plt.plot(epochs, test_losses, label="Teste", linestyle="--")
+    plt.title(f"Perda - {key}")
+    plt.xlabel("Épocas")
+    plt.ylabel("Perda")
+    plt.legend()
+
+    # Learning Rate
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, lr_history, label="Learning Rate", color="green")
+    plt.title(f"Learning Rate - {key}")
+    plt.xlabel("Épocas")
+    plt.ylabel("Taxa de Aprendizado")
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
