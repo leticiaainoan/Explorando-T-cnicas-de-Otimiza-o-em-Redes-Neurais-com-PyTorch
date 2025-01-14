@@ -1,0 +1,1 @@
+# Explorando-T-cnicas-de-Otimiza-o-em-Redes-Neurais-com-PyTorch
