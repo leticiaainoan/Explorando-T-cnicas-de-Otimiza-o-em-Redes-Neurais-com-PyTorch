@@ -1,0 +1,55 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Simulação de gradientes ao longo do treinamento
+iterations = 100
+np.random.seed(42)
+
+# Gradiente real (simulado como ruído com tendência decrescente)
+true_gradients = np.random.randn(iterations) * 0.2 + np.linspace(-1, 1, iterations)
+
+# EWMA para m_t (média móvel exponencial dos gradientes)
+beta1 = 0.9
+m_t = np.zeros(iterations)
+for t in range(1, iterations):
+    m_t[t] = beta1 * m_t[t - 1] + (1 - beta1) * true_gradients[t]
+
+# EWMA para v_t (variância dos gradientes)
+beta2 = 0.999
+v_t = np.zeros(iterations)
+for t in range(1, iterations):
+    v_t[t] = beta2 * v_t[t - 1] + (1 - beta2) * (true_gradients[t] ** 2)
+
+# Correções de bias
+m_t_hat = m_t / (1 - beta1 ** np.arange(1, iterations + 1))
+v_t_hat = v_t / (1 - beta2 ** np.arange(1, iterations + 1))
+
+# Taxa de aprendizado ajustada
+learning_rate = 0.01
+adjusted_updates = -learning_rate * m_t_hat / (np.sqrt(v_t_hat) + 1e-8)
+
+# Visualização
+fig, axs = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
+
+# Gradientes reais e suavizados (m_t)
+axs[0].plot(true_gradients, label='Gradientes Verdadeiros', color='blue', alpha=0.6)
+axs[0].plot(m_t, label='Média Móvel Exponencial (m_t)', color='red')
+axs[0].set_title("Gradientes e gradientes suavizados exponencialmente (m_t)")
+axs[0].legend()
+axs[0].grid(True)
+
+# Variância adaptada (v_t)
+axs[1].plot(v_t, label='Variância Móvel Exponencial (v_t)', color='green')
+axs[1].set_title("Variância Móvel Exponencial (v_t)")
+axs[1].legend()
+axs[1].grid(True)
+
+# Atualizações ajustadas
+axs[2].plot(adjusted_updates, label='Atualizações ajustadas', color='purple')
+axs[2].set_title("Atualizações de parâmetros ajustados")
+axs[2].legend()
+axs[2].grid(True)
+
+plt.xlabel("Iterações")
+plt.tight_layout()
+plt.show()
